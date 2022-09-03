@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bookshelf</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <header>
+        <h1>Bookshelf Apps</h1>
+    </header>
+
+    <div class="notification-bar">
+        <h3>Buku berhasil Disimpan</h3>
+        <div id="closeNotificationBar" class="close">X</div>
+    </div>
+
+    <main>
+
+        <section class="input-section shadow">
+            <h2>Masukkan Buku Baru</h2>
+
+            <form id="inputNewBook">
+
+                <div class="input-group">
+                    <label for="inputBookTitle">Judul</label>
+                    <input id="inputBookTitle" type="text" required>
+                </div>
+
+                <div class="input-group">
+                    <label for="inputBookAuthor">Penulis</label>
+                    <input id="inputBookAuthor" type="text" required>
+                </div>
+
+                <div class="input-group">
+                    <label for="inputBookYear">Tahun</label>
+                    <input id="inputBookYear" type="number" required>
+                </div>
+
+                <div class="input-group">
+                    <label for="inputBookCategory">Kategori Buku ( Opsional )</label>
+                    <input id="inputBookCategory" type="text" placeholder="Contoh : komputer, Komik dll.">
+                </div>
+
+                <div class="input-group-inline">
+                    <label for="inputBookIsComplete">Sudah di Baca</label>
+                    <input type="checkbox" id="inputBookIsComplete" value="false">
+                </div>
+
+                <button id="bookSubmitButton" type="submit">Tambah Buku</button>
+            </form>
+
+        </section>
+
+        <section class="bookshelf-section shadow">
+
+            <section class="search-section">
+                <h2>Cari Buku</h2>
+
+                <form id="searchBook">
+
+                    <label for="searchBookTitle">Judul</label>
+                    <input id="searchBookTitle" type="text">
+
+                    <select id="selectCategory">
+                        <option value="" selected>Kategori</option>
+                        <optgroup id="optGroup">
+                            <!-- <option value="abc">abc</option> -->
+                        </optgroup>
+                    </select>
+
+                </form>
+
+            </section>
+
+            <div class="container" id="bookshelfContainer">
+
+                <section class="bookshelf_content">
+                    <button id="deleteAll_InCompleteBooks" class="delete-all-books">Hapus Semua buku di Rak ini</button>
+                    <h3>Belum Selesai dibaca</h3>
+
+                    <div id="inCompleteBookList" class="book-list"></div>
+
+                </section>
+
+                <section class="bookshelf_content">
+                    <button id="deleteAll_CompleteBooks" class="delete-all-books">Hapus Semua buku di Rak ini</button>
+                    <h3>Selesai dibaca</h3>
+
+                    <div id="completeBookList" class="book-list"></div>
+
+                </section>
+
+            </div>
+
+        </section>
+    </main>
+    <script src="js/script.js"></script>
+</body>
+
+</html>
