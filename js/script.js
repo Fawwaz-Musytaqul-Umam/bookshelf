@@ -1,24 +1,29 @@
-const _books = [];
 const RENDER_EVENT = "RENDER_BOOKS";
+const _books = [];
+let optionButtonsValue = [];
 let bookIsCompleteValue = false;
 
 document.addEventListener("DOMContentLoaded", function () {
+
+    if (isStorageExist()) {
+        loadDataFromStorage();
+    }
 
     const form_SearchBook = document.getElementById("searchBook");
     form_SearchBook.addEventListener("input", function () {
         searchBooks();
     })
-    
+
     const removeAllBooksFromInCompleteList = document.querySelector("#deleteAll_InCompleteBooks");
     const removeAllBooksFromCompleteList = document.querySelector("#deleteAll_CompleteBooks");
-    
+
     removeAllBooksFromInCompleteList.addEventListener("click", function () {
         const inCompleteBooksList = document.getElementById("inCompleteBookList")
         if (inCompleteBooksList.innerHTML != '') {
             removeAllBooks(false);
         }
     })
-    
+
     removeAllBooksFromCompleteList.addEventListener("click", function () {
         const completeBooksList = document.getElementById("completeBookList")
         if (completeBooksList.innerHTML != '') {
@@ -36,16 +41,84 @@ document.addEventListener("DOMContentLoaded", function () {
     submitNewBook.addEventListener("submit", function (event) {
         event.preventDefault();
         addBook()
-        showNotificationBar();
     })
 
 })
-
 
 function checkboxTriggerEvent(event) {
     if (event.target.checked) bookIsCompleteValue = true;
     else bookIsCompleteValue = false;
 }
+
+function addBook() {
+    let id = +new Date();
+    const title = document.querySelector("#inputBookTitle").value;
+    const author = document.querySelector("#inputBookAuthor").value;
+    const year = document.querySelector("#inputBookYear").value;
+    const category = document.querySelector("#inputBookCategory").value;
+
+    const bookObject = generateBookObject(id, title, author, year, category, bookIsCompleteValue);
+    _books.unshift(bookObject)
+
+    addCategory();
+    saveData();
+    document.dispatchEvent(new Event(RENDER_EVENT))
+}
+
+function addCategory() { optionButtonsValue.unshift(_books[0].category) }
+
+function generateBookObject(id, title, author, year, category, isComplete) {
+    return { id, title, author, year, category, isComplete }
+}
+
+document.addEventListener(RENDER_EVENT, function () {
+    const inCompleteBooksList = document.querySelector("#inCompleteBookList");
+    const CompleteBooksList = document.querySelector("#completeBookList");
+
+    inCompleteBooksList.innerHTML = '';
+    CompleteBooksList.innerHTML = '';
+
+    for (const bookObject of _books) {
+
+        let bookElement = createBookElement(bookObject)
+
+        if (!bookObject.isComplete) inCompleteBooksList.append(bookElement)
+        else CompleteBooksList.append(bookElement)
+
+    }
+
+    if (_books.length == 0) {
+        optionButtonsValue = [];
+    }
+
+    const optGroup = document.getElementById("optGroup");
+    optGroup.innerHTML = '';
+
+    let newOptionButton = [...new Set(optionButtonsValue)];
+
+    for (const newValue of newOptionButton) {
+        const optionElement = document.createElement('option');
+        optionElement.setAttribute('value', newValue);
+        optionElement.innerHTML = newValue;
+
+        optGroup.append(optionElement)
+    }
+
+    // checkforRenderOptionButton()
+
+})
+
+// function checkforRenderOptionButton() {
+//     for (let index1 = 0; index1 < optionButtonsValue.length; index1++) {
+
+//         for (let index2 = 0; index2 < _books.length; index2++) {
+//             if (_books[index2].category == optionButtonsValue[index1]) {
+                
+//             }
+//         }
+
+//     }
+// }
 
 function searchBooks() {
     const inputSearchBooks = document.getElementById("searchBookTitle").value.toLowerCase();
@@ -74,87 +147,6 @@ function searchBooks() {
         }
     }
 
-}
-
-function removeAllBooks(targetBook_IsComplete) {
-    let confirmAction = null;
-    if (targetBook_IsComplete) {
-        confirmAction = confirm("Apakah anda yakin, menghapus semua Buku yang sudah di baca ??")
-    } else {
-        confirmAction = confirm("Apakah anda yakin, menghapus semua Buku yang belum di baca ??")
-    }
-
-    if (confirmAction) {
-        let index = 0;
-        while (index < _books.length) {
-
-            if (_books[index].isComplete === targetBook_IsComplete) _books.splice(index, 1);
-            else ++index;
-
-        }
-    }
-    document.dispatchEvent(new Event(RENDER_EVENT));
-};
-
-function addBook() {
-    let id = +new Date();
-    const title = document.querySelector("#inputBookTitle").value;
-    const author = document.querySelector("#inputBookAuthor").value;
-    const year = document.querySelector("#inputBookYear").value;
-    const category = document.querySelector("#inputBookCategory").value;
-
-    const bookObject = generateBookObject(id, title, author, year, category, bookIsCompleteValue);
-    _books.unshift(bookObject)
-
-    addCategory()
-    document.dispatchEvent(new Event(RENDER_EVENT))
-}
-
-let optionButtons = [];
-function addCategory() {
-
-    let optionElement = `<option value="${_books[0].category}">${_books[0].category}</option>`;
-    optionButtons.push(optionElement)
-    let newOptionButton = [...new Set(optionButtons)];
-
-    let renderOptionButton = ''
-    for (const button of newOptionButton) {
-        renderOptionButton += button;
-    }
-
-    const optGroup = document.getElementById("optGroup");
-    optGroup.innerHTML = renderOptionButton;
-}
-
-function generateBookObject(id, title, author, year, category, isComplete) {
-    return { id, title, author, year, category, isComplete }
-}
-
-document.addEventListener(RENDER_EVENT, function () {
-    const inCompleteBooksList = document.querySelector("#inCompleteBookList");
-    const CompleteBooksList = document.querySelector("#completeBookList");
-
-    inCompleteBooksList.innerHTML = '';
-    CompleteBooksList.innerHTML = '';
-
-    for (const bookObject of _books) {
-
-        let bookElement = createBookElement(bookObject)
-
-        if (!bookObject.isComplete) inCompleteBooksList.append(bookElement)
-        else CompleteBooksList.append(bookElement)
-
-    }
-})
-
-function showNotificationBar() {
-    const notificationBar = document.querySelector('.notification-bar')
-    notificationBar.style.display = 'flex';
-
-    const closeNotificationBar = document.querySelector('#closeNotificationBar')
-    closeNotificationBar.addEventListener("click", function () {
-        notificationBar.style.display = 'none';
-    })
 }
 
 function createBookContainer(bookObject) {
@@ -237,6 +229,7 @@ function addBookToCompleteList(id) {
 
     bookTarget.isComplete = true;
     document.dispatchEvent(new Event(RENDER_EVENT));
+    saveData()
 }
 
 function undoBookFromCompleteList(id) {
@@ -245,6 +238,7 @@ function undoBookFromCompleteList(id) {
 
     bookTarget.isComplete = false;
     document.dispatchEvent(new Event(RENDER_EVENT));
+    saveData()
 }
 
 function removeBookFromList(id) {
@@ -255,6 +249,87 @@ function removeBookFromList(id) {
     const confirmAction = confirm("Apakah anda yakin untuk menghapus buku ini ??")
     if (confirmAction) _books.splice(bookTarget, 1);
 
+    document.dispatchEvent(new Event(RENDER_EVENT));
+    saveData()
+}
+
+function removeAllBooks(targetBook_IsComplete) {
+    let confirmAction = null;
+    if (targetBook_IsComplete) {
+        confirmAction = confirm("Apakah anda yakin, menghapus semua Buku yang sudah di baca ??")
+    } else {
+        confirmAction = confirm("Apakah anda yakin, menghapus semua Buku yang belum di baca ??")
+    }
+
+    if (confirmAction) {
+        let index1 = 0;
+        while (index1 < _books.length) {
+
+            if (_books[index1].isComplete === targetBook_IsComplete) {
+                _books.splice(index1, 1)
+            }
+            else ++index1;
+
+        }
+    }
 
     document.dispatchEvent(new Event(RENDER_EVENT));
+    saveData()
+};
+
+const SAVED_EVENT = 'saved-todo';
+const STORAGE_KEY = ['BOOKS', 'OPTION'];
+
+function saveData() {
+    if (isStorageExist()) {
+        const books = JSON.stringify(_books);
+        const option = JSON.stringify([...new Set(optionButtonsValue)]);
+
+        localStorage.setItem(STORAGE_KEY[0], books);
+        localStorage.setItem(STORAGE_KEY[1], option);
+
+        document.dispatchEvent(new Event(SAVED_EVENT));
+    }
+}
+function isStorageExist() {
+    if (typeof (Storage) === undefined) {
+        return false;
+    }
+    return true;
+}
+
+function loadDataFromStorage() {
+    const serializedData_Books = localStorage.getItem(STORAGE_KEY[0]);
+    const serializedData_Option = localStorage.getItem(STORAGE_KEY[1]);
+
+    let bookObject = JSON.parse(serializedData_Books);
+    let optionObject = JSON.parse(serializedData_Option);
+
+    if (bookObject !== null) {
+        for (const book of bookObject) {
+            _books.unshift(book);
+        }
+    }
+
+    if (optionObject !== null) {
+        for (const option of optionObject) {
+            optionButtonsValue.unshift(option);
+        }
+    }
+
+    document.dispatchEvent(new Event(RENDER_EVENT));
+}
+
+document.addEventListener(SAVED_EVENT, function () {
+    showNotificationBar();
+})
+
+function showNotificationBar() {
+    const notificationBar = document.querySelector('.notification-bar')
+    notificationBar.style.display = 'flex';
+
+    const closeNotificationBar = document.querySelector('#closeNotificationBar')
+    closeNotificationBar.addEventListener("click", function () {
+        notificationBar.style.display = 'none';
+    })
 }
