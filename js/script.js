@@ -18,21 +18,21 @@ document.addEventListener("DOMContentLoaded", function () {
     const removeAllBooksFromCompleteList = document.querySelector("#deleteAll_CompleteBooks");
 
     removeAllBooksFromInCompleteList.addEventListener("click", function () {
-        const inCompleteBooksList = document.getElementById("inCompleteBookList")
-        if (inCompleteBooksList.innerHTML != '') {
+        const inCompleteBookList = document.getElementById("inCompleteBookList")
+        if (inCompleteBookList.innerHTML != '') {
             removeAllBooks(false);
         }
     })
 
     removeAllBooksFromCompleteList.addEventListener("click", function () {
-        const completeBooksList = document.getElementById("completeBookList")
-        if (completeBooksList.innerHTML != '') {
+        const completeBookList = document.getElementById("completeBookList")
+        if (completeBookList.innerHTML != '') {
             removeAllBooks(true);
         }
     })
 
-    const submitNewBook = document.querySelector("#inputNewBook");
     const inputCheckbox = document.querySelector("#inputBookIsComplete");
+    const submitNewBook = document.querySelector("#inputNewBook");
 
     inputCheckbox.addEventListener("change", function (event) {
         checkboxTriggerEvent(event)
@@ -62,28 +62,31 @@ function addBook() {
 
     addCategory();
     saveData();
+    showNotificationBar();
     document.dispatchEvent(new Event(RENDER_EVENT))
 }
-
-function addCategory() { optionButtonsValue.unshift(_books[0].category) }
 
 function generateBookObject(id, title, author, year, category, isComplete) {
     return { id, title, author, year, category, isComplete }
 }
 
-document.addEventListener(RENDER_EVENT, function () {
-    const inCompleteBooksList = document.querySelector("#inCompleteBookList");
-    const CompleteBooksList = document.querySelector("#completeBookList");
+function addCategory() {
+    optionButtonsValue.unshift(_books[0].category)
+}
 
-    inCompleteBooksList.innerHTML = '';
-    CompleteBooksList.innerHTML = '';
+document.addEventListener(RENDER_EVENT, function () {
+    const inCompleteBookList = document.querySelector("#inCompleteBookList");
+    const completeBookList = document.querySelector("#completeBookList");
+
+    inCompleteBookList.innerHTML = '';
+    completeBookList.innerHTML = '';
 
     for (const bookObject of _books) {
 
         let bookElement = createBookElement(bookObject)
 
-        if (!bookObject.isComplete) inCompleteBooksList.append(bookElement)
-        else CompleteBooksList.append(bookElement)
+        if (!bookObject.isComplete) inCompleteBookList.append(bookElement)
+        else completeBookList.append(bookElement)
 
     }
 
@@ -96,29 +99,17 @@ document.addEventListener(RENDER_EVENT, function () {
 
     let newOptionButton = [...new Set(optionButtonsValue)];
 
-    for (const newValue of newOptionButton) {
-        const optionElement = document.createElement('option');
-        optionElement.setAttribute('value', newValue);
-        optionElement.innerHTML = newValue;
-
-        optGroup.append(optionElement)
+    for (const value of newOptionButton) {
+        if (value != '') {
+            const optionElement = document.createElement('option');
+            optionElement.setAttribute("value", value);
+            optionElement.innerHTML = value;
+    
+            optGroup.append(optionElement)
+        }
     }
 
-    // checkforRenderOptionButton()
-
 })
-
-// function checkforRenderOptionButton() {
-//     for (let index1 = 0; index1 < optionButtonsValue.length; index1++) {
-
-//         for (let index2 = 0; index2 < _books.length; index2++) {
-//             if (_books[index2].category == optionButtonsValue[index1]) {
-                
-//             }
-//         }
-
-//     }
-// }
 
 function searchBooks() {
     const inputSearchBooks = document.getElementById("searchBookTitle").value.toLowerCase();
@@ -149,7 +140,7 @@ function searchBooks() {
 
 }
 
-function createBookContainer(bookObject) {
+function createBookCore(bookObject) {
     const book_container = document.createElement("article");
     book_container.classList.add('book_item');
 
@@ -168,43 +159,76 @@ function createBookContainer(bookObject) {
 }
 
 function createBookElement(bookObject) {
-    const book_container = createBookContainer(bookObject)
+    const book_container = createBookCore(bookObject)
     const book_Action = document.createElement("div");
     const deleteBook_Button = document.createElement("button");
 
     book_Action.classList.add('action')
     deleteBook_Button.classList.add('delete-book_button')
-    deleteBook_Button.innerText = "Hapus Buku ini"
+    deleteBook_Button.innerText = "Hapus Buku ini";
 
     deleteBook_Button.addEventListener("click", function () {
         removeBookFromList(bookObject.id);
     })
 
     if (!bookObject.isComplete) {
-        const doneBook_Button = document.createElement("button");
-        doneBook_Button.classList.add('done-book_button');
-        doneBook_Button.innerText = "Selesai dibaca";
+        const done_Button = document.createElement("button");
+        done_Button.classList.add('done-book_button');
+        done_Button.innerText = "Selesai dibaca";
 
-        doneBook_Button.addEventListener("click", function name() {
+        done_Button.addEventListener("click", function name() {
             addBookToCompleteList(bookObject.id)
         })
 
-        book_Action.append(doneBook_Button, deleteBook_Button);
+        book_Action.append(done_Button, deleteBook_Button);
     }
     else {
-        const undoBook_Button = document.createElement("button");
-        undoBook_Button.classList.add('undo-book_button');
-        undoBook_Button.innerText = "Belum dibaca";
+        const undo_Button = document.createElement("button");
+        undo_Button.classList.add('undo-book_button');
+        undo_Button.innerText = "Belum dibaca";
 
-        undoBook_Button.addEventListener("click", function () {
+        undo_Button.addEventListener("click", function () {
             undoBookFromCompleteList(bookObject.id)
         })
 
-        book_Action.append(undoBook_Button, deleteBook_Button);
+        book_Action.append(undo_Button, deleteBook_Button);
     }
 
     book_container.append(book_Action);
     return book_container;
+}
+
+function addBookToCompleteList(id) {
+    const bookTarget = findBookId(id);
+    if (bookTarget === 'TARGET_NOT_FOUND') return;
+
+    bookTarget.isComplete = true;
+    document.dispatchEvent(new Event(RENDER_EVENT));
+    saveData()
+    showNotificationBar();
+}
+
+function undoBookFromCompleteList(id) {
+    const bookTarget = findBookId(id);
+    if (bookTarget === 'TARGET_NOT_FOUND') return;
+
+    bookTarget.isComplete = false;
+    document.dispatchEvent(new Event(RENDER_EVENT));
+    saveData()
+    showNotificationBar();
+}
+
+function removeBookFromList(id) {
+    const bookTarget = findBookIndex(id);
+
+    if (bookTarget === 'TARGET_NOT_FOUND') return;
+
+    const confirmAction = confirm("Apakah anda yakin untuk menghapus buku ini ??")
+    if (confirmAction) _books.splice(bookTarget, 1);
+
+    document.dispatchEvent(new Event(RENDER_EVENT));
+    saveData()
+    showNotificationBar();
 }
 
 function findBookId(targetId) {
@@ -212,7 +236,7 @@ function findBookId(targetId) {
         if (book.id === targetId) return book;
     }
 
-    return 'NOT_FOUND';
+    return 'TARGET_NOT_FOUND';
 }
 
 function findBookIndex(targetId) {
@@ -220,37 +244,7 @@ function findBookIndex(targetId) {
         if (_books[index].id === targetId) return index;
     }
 
-    return 'NOT_FOUND';
-}
-
-function addBookToCompleteList(id) {
-    const bookTarget = findBookId(id);
-    if (bookTarget === 'NOT_FOUND') return;
-
-    bookTarget.isComplete = true;
-    document.dispatchEvent(new Event(RENDER_EVENT));
-    saveData()
-}
-
-function undoBookFromCompleteList(id) {
-    const bookTarget = findBookId(id);
-    if (bookTarget === 'NOT_FOUND') return;
-
-    bookTarget.isComplete = false;
-    document.dispatchEvent(new Event(RENDER_EVENT));
-    saveData()
-}
-
-function removeBookFromList(id) {
-    const bookTarget = findBookIndex(id);
-
-    if (bookTarget === 'NOT_FOUND') return;
-
-    const confirmAction = confirm("Apakah anda yakin untuk menghapus buku ini ??")
-    if (confirmAction) _books.splice(bookTarget, 1);
-
-    document.dispatchEvent(new Event(RENDER_EVENT));
-    saveData()
+    return 'TARGET_NOT_FOUND';
 }
 
 function removeAllBooks(targetBook_IsComplete) {
@@ -262,22 +256,22 @@ function removeAllBooks(targetBook_IsComplete) {
     }
 
     if (confirmAction) {
-        let index1 = 0;
-        while (index1 < _books.length) {
+        let index = 0;
+        while (index < _books.length) {
 
-            if (_books[index1].isComplete === targetBook_IsComplete) {
-                _books.splice(index1, 1)
+            if (_books[index].isComplete === targetBook_IsComplete) {
+                _books.splice(index, 1)
             }
-            else ++index1;
+            else ++index;
 
         }
+        showNotificationBar();
     }
 
     document.dispatchEvent(new Event(RENDER_EVENT));
     saveData()
 };
 
-const SAVED_EVENT = 'saved-todo';
 const STORAGE_KEY = ['BOOKS', 'OPTION'];
 
 function saveData() {
@@ -288,9 +282,19 @@ function saveData() {
         localStorage.setItem(STORAGE_KEY[0], books);
         localStorage.setItem(STORAGE_KEY[1], option);
 
-        document.dispatchEvent(new Event(SAVED_EVENT));
     }
 }
+
+function showNotificationBar() {
+    const notificationBar = document.querySelector('.notification-bar')
+    notificationBar.style.display = 'flex';
+
+    const closeNotificationBar = document.querySelector('#closeNotificationBar')
+    closeNotificationBar.addEventListener("click", function () {
+        notificationBar.style.display = 'none';
+    })
+}
+
 function isStorageExist() {
     if (typeof (Storage) === undefined) {
         return false;
@@ -307,7 +311,7 @@ function loadDataFromStorage() {
 
     if (bookObject !== null) {
         for (const book of bookObject) {
-            _books.unshift(book);
+            _books.push(book);
         }
     }
 
@@ -318,18 +322,4 @@ function loadDataFromStorage() {
     }
 
     document.dispatchEvent(new Event(RENDER_EVENT));
-}
-
-document.addEventListener(SAVED_EVENT, function () {
-    showNotificationBar();
-})
-
-function showNotificationBar() {
-    const notificationBar = document.querySelector('.notification-bar')
-    notificationBar.style.display = 'flex';
-
-    const closeNotificationBar = document.querySelector('#closeNotificationBar')
-    closeNotificationBar.addEventListener("click", function () {
-        notificationBar.style.display = 'none';
-    })
 }
